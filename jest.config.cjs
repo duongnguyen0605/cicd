@@ -11,4 +11,9 @@ module.exports = {
   moduleNameMapper: {
     "\\.(css|scss|sass|less)$": "identity-obj-proxy",
   },
+  coverageThreshold: {
+    global: {
+      statements: 80,
+    },
+  },
 };
