@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  NODE_VERSION: 24.x
+  CACHE_KEY: deps-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+
 permissions:
   contents: read
   pages: write
@@ -17,17 +21,14 @@ permissions:
 jobs:
   install_app:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24.x]
   
     steps:
       - uses: actions/checkout@v4
   
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 24.x
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
   
       - name: Install dependencies (only once)
@@ -39,14 +40,11 @@ jobs:
           path: |
             ~/.npm
             node_modules
-          key: deps-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ env.CACHE_KEY }}
 
   build_app:
     runs-on: ubuntu-latest
     needs: install_app
-    strategy:
-      matrix:
-        node-version: [24.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +55,7 @@ jobs:
           path: |
             ~/.npm
             node_modules
-          key: deps-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ env.CACHE_KEY }}
 
       - name: Build project
         run: npm run build
@@ -70,9 +68,6 @@ jobs:
   test_app:
     runs-on: ubuntu-latest
     needs: install_app
-    strategy:
-      matrix:
-        node-version: [24.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +78,7 @@ jobs:
           path: |
             ~/.npm
             node_modules
-          key: deps-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ env.CACHE_KEY }}
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -91,12 +86,13 @@ jobs:
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report-${{ matrix.node-version }}
           path: coverage/
 
   deploy_app:
     runs-on: ubuntu-latest
-    needs: build_app
+    needs: 
+      - build_app 
+      - test_app
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
