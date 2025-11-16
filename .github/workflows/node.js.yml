@@ -11,7 +11,7 @@ on:
 
 env:
   NODE_VERSION: 24.x
-  CACHE_KEY: deps-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+  CACHE_KEY: ${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
 
 permissions:
   contents: read
